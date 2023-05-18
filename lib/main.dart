@@ -53,7 +53,7 @@ class MyHomePage extends ConsumerStatefulWidget {
 }
 
 class MyHomePageState extends ConsumerState<MyHomePage> {
-  final TextEditingController _controller = TextEditingController();
+  final TextEditingController _textController = TextEditingController();
 
   @override
   void initState() {
@@ -62,7 +62,7 @@ class MyHomePageState extends ConsumerState<MyHomePage> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    _textController.dispose();
     super.dispose();
   }
 
@@ -78,7 +78,7 @@ class MyHomePageState extends ConsumerState<MyHomePage> {
           children: [
             for (final ingredient in data)
               ListTile(
-                key: ValueKey(ingredient.name),
+                key: ValueKey('${ingredient.id}-${ingredient.name}'),
                 title: Text(ingredient.name),
               )
           ],
@@ -107,7 +107,7 @@ class MyHomePageState extends ConsumerState<MyHomePage> {
           ),
           content: TextField(
             key: const ValueKey('add_ingredient_text_field'),
-            controller: _controller,
+            controller: _textController,
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               labelText: 'Search for ingredient',
@@ -119,9 +119,10 @@ class MyHomePageState extends ConsumerState<MyHomePage> {
               child: const Text('Add'),
               onPressed: () {
                 ref.read(ingredientsProvider.notifier).addIngredient(
-                      Ingredient(id: 1, name: _controller.text),
+                      Ingredient(id: 1, name: _textController.text),
                     );
                 Navigator.of(context).pop();
+                _textController.clear();
               },
             ),
           ],
