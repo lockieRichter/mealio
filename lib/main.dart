@@ -1,10 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealio/models/ingredient.dart';
+import 'package:mealio/providers/database.dart';
 import 'package:mealio/providers/ingredients.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final database = await openDatabase(
+    join(await getDatabasesPath(), 'mealio_database.db'),
+    onCreate: (db, version) {
+      return db.execute(
+        'CREATE TABLE ingredients_library(id INTEGER PRIMARY KEY, name TEXT)',
+      );
+    },
+    version: 1,
+  );
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        databaseProvider.overrideWithValue(database),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -17,9 +39,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const ProviderScope(
-        child: MyHomePage(title: 'Ingredients'),
-      ),
+      home: const MyHomePage(title: 'Ingredients'),
     );
   }
 }
@@ -53,18 +73,22 @@ class MyHomePageState extends ConsumerState<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: ListView(
-        children: [
-          for (final ingredient in ingredients)
-            ListTile(
-              key: ValueKey(ingredient.name),
-              title: Text(ingredient.name),
-            )
-        ],
+      body: ingredients.when(
+        data: (data) => ListView(
+          children: [
+            for (final ingredient in data)
+              ListTile(
+                key: ValueKey(ingredient.name),
+                title: Text(ingredient.name),
+              )
+          ],
+        ),
+        error: (e, s) => Center(child: Text(e.toString())),
+        loading: () => const Center(child: CircularProgressIndicator()),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _showAddIngredientDialog();
+          _showAddIngredientDialog(context);
         },
         tooltip: 'Add ingredients',
         child: const Icon(Icons.add),
@@ -72,7 +96,7 @@ class MyHomePageState extends ConsumerState<MyHomePage> {
     );
   }
 
-  Future<void> _showAddIngredientDialog() async {
+  Future<void> _showAddIngredientDialog(BuildContext context) async {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -95,7 +119,7 @@ class MyHomePageState extends ConsumerState<MyHomePage> {
               child: const Text('Add'),
               onPressed: () {
                 ref.read(ingredientsProvider.notifier).addIngredient(
-                      Ingredient(_controller.text),
+                      Ingredient(id: 1, name: _controller.text),
                     );
                 Navigator.of(context).pop();
               },
