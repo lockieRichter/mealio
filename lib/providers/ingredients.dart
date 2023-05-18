@@ -23,11 +23,18 @@ class Ingredients extends _$Ingredients {
     final db = ref.read(databaseProvider);
 
     // Insert into database and update state
-    await db.insert(
+    final insertedId = await db.insert(
       'ingredients_library',
       ingredient.toJson(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-    state.whenData((value) => state = AsyncValue.data([...value, ingredient]));
+    state.whenData(
+      (value) => state = AsyncValue.data(
+        [
+          ...value,
+          ingredient.copyWith(id: insertedId),
+        ],
+      ),
+    );
   }
 }

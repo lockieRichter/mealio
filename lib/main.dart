@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mealio/models/ingredient.dart';
 import 'package:mealio/providers/database.dart';
 import 'package:mealio/providers/ingredients.dart';
+import 'package:mealio/providers/selected_category.dart';
+import 'package:mealio/ui/category_select.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -13,7 +15,7 @@ void main() async {
     join(await getDatabasesPath(), 'mealio_database.db'),
     onCreate: (db, version) {
       return db.execute(
-        'CREATE TABLE ingredients_library(id INTEGER PRIMARY KEY, name TEXT)',
+        'CREATE TABLE ingredients_library(id INTEGER PRIMARY KEY, name TEXT, category TEXT)',
       );
     },
     version: 1,
@@ -80,6 +82,7 @@ class MyHomePageState extends ConsumerState<MyHomePage> {
               ListTile(
                 key: ValueKey('${ingredient.id}-${ingredient.name}'),
                 title: Text(ingredient.name),
+                subtitle: Text(ingredient.category.name),
               )
           ],
         ),
@@ -105,12 +108,19 @@ class MyHomePageState extends ConsumerState<MyHomePage> {
             'Add Ingredient',
             key: ValueKey('add_ingredient_dialog_title'),
           ),
-          content: TextField(
-            key: const ValueKey('add_ingredient_text_field'),
-            controller: _textController,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'Search for ingredient',
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: [
+                TextField(
+                  key: const ValueKey('add_ingredient_text_field'),
+                  controller: _textController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Search for ingredient',
+                  ),
+                ),
+                const CategorySelect()
+              ],
             ),
           ),
           actions: <Widget>[
@@ -118,8 +128,12 @@ class MyHomePageState extends ConsumerState<MyHomePage> {
               key: const ValueKey('add_ingredient_button'),
               child: const Text('Add'),
               onPressed: () {
+                final selectedCategory = ref.read(selectedCategoryProvider);
                 ref.read(ingredientsProvider.notifier).addIngredient(
-                      Ingredient(id: 1, name: _textController.text),
+                      Ingredient(
+                        name: _textController.text,
+                        category: selectedCategory,
+                      ),
                     );
                 Navigator.of(context).pop();
                 _textController.clear();

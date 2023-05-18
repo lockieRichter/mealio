@@ -52,7 +52,7 @@ void main() {
     await tester.pump();
 
     // Verify that the ingredient is displayed in the list.
-    expect(find.byKey(const ValueKey('1-Skittles')), findsOneWidget);
+    expect(find.byKey(const ValueKey('0-Skittles')), findsOneWidget);
   });
 
   testWidgets('Existing ingredients show at startup smoke test',
@@ -60,7 +60,8 @@ void main() {
     final mockDb = MockDatabase();
     when(mockDb.query(any)).thenAnswer(
       (_) async => [
-        const Ingredient(id: 1, name: "Bread").toJson(),
+        const Ingredient(id: 1, name: "Bread", category: Category.grain)
+            .toJson(),
       ],
     );
 
